@@ -73,35 +73,54 @@ export default function App() {
   const handleSubmitExam = async () => {
     let score = 0, correctCount = 0, wrongCount = 0, partialCount = 0;
 
-    questionsData.forEach(q => {
+    questionsData.forEach((q, index) => {
       const uAns = userAnswers[q.id];
-      if (uAns === undefined || uAns === '' || (Array.isArray(uAns) && uAns.length === 0)) return;
 
-      if (q.type === 'single' || q.type === 'matching') {
-        if (uAns === q.correctAnswer) { score += q.marks.correct; correctCount++; }
-        else { score += q.marks.incorrect; wrongCount++; }
-      } else if (q.type === 'numerical') {
-        if (String(uAns).trim() === String(q.correctAnswer).trim()) { score += q.marks.correct; correctCount++; }
-        else { score += q.marks.incorrect; wrongCount++; }
-      } else if (q.type === 'multiple') {
-        const correctSet = q.correctAnswers;
-        const userSet = uAns || [];
-        const isAnyWrong = userSet.some(opt => !correctSet.includes(opt));
-        if (isAnyWrong) { score += q.marks.incorrect; wrongCount++; }
-        else if (userSet.length === correctSet.length) { score += q.marks.correct; correctCount++; }
-        else if (userSet.length > 0) { score += userSet.length; partialCount++; }
+      // --- KHAND A (Pehle 4 Questions: Index 0, 1, 2, 3) ---
+      if (index < 4) {
+        if (uAns === undefined || uAns === '' || (Array.isArray(uAns) && uAns.length === 0)) {
+          // Koi vikalp nahi chuna -> 0 marks (kuch mat karo)
+        } else if (uAns === q.correctAnswer) {
+          score += 3;       // Sahi vikalp -> +3 marks
+          correctCount++;
+        } else {
+          score -= 1;       // Galat vikalp -> -1 mark
+          wrongCount++;
+        }
+      } 
+      // --- BAAKI KHAND / QUESTIONS KE LIYE ---
+      else {
+        if (uAns === undefined || uAns === '' || (Array.isArray(uAns) && uAns.length === 0)) return;
+
+        if (q.type === 'single' || q.type === 'matching') {
+          if (uAns === q.correctAnswer) { score += q.marks.correct; correctCount++; }
+          else { score += q.marks.incorrect; wrongCount++; }
+        } else if (q.type === 'numerical') {
+          if (String(uAns).trim() === String(q.correctAnswer).trim()) { score += q.marks.correct; correctCount++; }
+          else { score += q.marks.incorrect; wrongCount++; }
+        } else if (q.type === 'multiple') {
+          const correctSet = q.correctAnswers;
+          const userSet = uAns || [];
+          const isAnyWrong = userSet.some(opt => !correctSet.includes(opt));
+          if (isAnyWrong) { score += q.marks.incorrect; wrongCount++; }
+          else if (userSet.length === correctSet.length) { score += q.marks.correct; correctCount++; }
+          else if (userSet.length > 0) { score += userSet.length; partialCount++; }
+        }
       }
     });
 
     let predictedRank = "N/A";
-    const percentage = (score / 60) * 100;
-    if (percentage >= 80) predictedRank = "AIR < 100";
-    else if (percentage >= 65) predictedRank = "AIR 100 - 500";
-    else if (percentage >= 50) predictedRank = "AIR 500 - 2000";
-    else if (percentage >= 35) predictedRank = "AIR 2000 - 5000";
-    else predictedRank = "AIR > 5000 / Qualified";
+    
+    if (score >= 45) {
+      predictedRank = "AIR 1 - 18,000 (IIT Seat Zone)";
+    } else if (score >= 25) {
+      predictedRank = "AIR 18,001 - 57,000 (Qualified Zone)";
+    } else if (score > 0) {
+      predictedRank = "Not Qualified (<57k Rank)";
+    } else {
+      predictedRank = "Unranked (0 or Negative Score)";
+    }
 
-    // --- YAHAN APNA GOOGLE SCRIPT URL PASTE KARNA HAI ---
     const studentResultData = {
       rollNo: student.rollNo,
       name: student.name,
@@ -122,7 +141,6 @@ export default function App() {
     } catch (error) {
       console.error("Error sending score:", error);
     }
-    // ---------------------------------------------------
 
     setResult({ 
       totalScore: score, 
