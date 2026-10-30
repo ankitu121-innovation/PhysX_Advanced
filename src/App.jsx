@@ -71,6 +71,8 @@ export default function App() {
   };
 
   const handleSubmitExam = async () => {
+    // Test submit hote hi local storage mein flag save kar do
+    localStorage.setItem(`submitted_${student.rollNo}`, 'true');
     let score = 0, correctCount = 0, wrongCount = 0, partialCount = 0;
 
     questionsData.forEach((q, index) => {

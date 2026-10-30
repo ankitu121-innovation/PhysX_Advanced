@@ -9,7 +9,7 @@ export default function LoginScreen({ onStartExam }) {
     e.preventDefault();
     const cleanRoll = rollNo.trim().toUpperCase();
 
-    // Database mein check karo ki roll number exist karta hai ya nahi
+    // 1. Check karo ki roll number valid list mein hai ya nahi
     const foundStudent = authorizedStudents.find(
       (s) => s.rollNo.toUpperCase() === cleanRoll
     );
@@ -19,7 +19,17 @@ export default function LoginScreen({ onStartExam }) {
       return;
     }
 
-    // Agar match ho gaya, toh student object pass kar do
+    // 2. CHECK: Kya is roll number se pehle login/attempt ho chuka hai?
+    const isAlreadyAttempted = localStorage.getItem(`attempted_${foundStudent.rollNo}`);
+    if (isAlreadyAttempted) {
+      setError("⚠️ Access Blocked: Is Roll Number se pehle hi test access kiya ja chuka hai. Dobara login allowed nahi hai!");
+      return;
+    }
+
+    // 3. Jaise hi student login kare, turant lock laga do (bina submit kiye bhi)
+    localStorage.setItem(`attempted_${foundStudent.rollNo}`, 'true');
+
+    // Sab theek hai, toh test start kar do
     setError('');
     onStartExam(foundStudent);
   };
