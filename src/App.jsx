@@ -9,7 +9,7 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [questionStatus, setQuestionStatus] = useState({});
-  const [timeLeft, setTimeLeft] = useState(3600); // 3 Hours
+  const [timeLeft, setTimeLeft] = useState(3600); // 1 Hour
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -70,7 +70,7 @@ export default function App() {
     setQuestionStatus(prev => ({ ...prev, [currentQ.id]: 'not_answered' }));
   };
 
-  const handleSubmitExam = () => {
+  const handleSubmitExam = async () => {
     let score = 0, correctCount = 0, wrongCount = 0, partialCount = 0;
 
     questionsData.forEach(q => {
@@ -101,7 +101,38 @@ export default function App() {
     else if (percentage >= 35) predictedRank = "AIR 2000 - 5000";
     else predictedRank = "AIR > 5000 / Qualified";
 
-    setResult({ totalScore: score, maxScore: 60, correctCount, wrongCount, partialCount, predictedRank, accuracy: Math.max(0, Math.round((correctCount / (correctCount + wrongCount)) * 100 || 0)) });
+    // --- YAHAN APNA GOOGLE SCRIPT URL PASTE KARNA HAI ---
+    const studentResultData = {
+      rollNo: student.rollNo,
+      name: student.name,
+      score: score,
+      rank: predictedRank
+    };
+
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0_cb_6hz3X4w4wxUkBcJZxdY39uj1kuETocyKGpiJoNsz5Fspw-2UxShrCTbP6NTa/exec";
+
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(studentResultData),
+      });
+      console.log("Score successfully sent to Google Sheet!");
+    } catch (error) {
+      console.error("Error sending score:", error);
+    }
+    // ---------------------------------------------------
+
+    setResult({ 
+      totalScore: score, 
+      maxScore: 60, 
+      correctCount, 
+      wrongCount, 
+      partialCount, 
+      predictedRank, 
+      accuracy: Math.max(0, Math.round((correctCount / (correctCount + wrongCount)) * 100 || 0)) 
+    });
     setIsSubmitted(true);
   };
 
